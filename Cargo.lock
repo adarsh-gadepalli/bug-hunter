@@ -5,3 +5,14 @@ version = 4
 [[package]]
 name = "bug-hunter"
 version = "0.1.0"
+
+[[package]]
+name = "bughunter"
+version = "0.1.0"
+
+[[package]]
+name = "system"
+version = "0.1.0"
+dependencies = [
+ "bughunter",
+]

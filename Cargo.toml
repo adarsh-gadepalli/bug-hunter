@@ -1,3 +1,7 @@
+[workspace]
+members = [".", "crates/bughunter", "crates/system"]
+resolver = "2"
+
 [package]
 name = "bug-hunter"
 version = "0.1.0"
