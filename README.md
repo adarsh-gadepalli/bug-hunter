@@ -4,7 +4,7 @@ Inspired by [Antithesis](https://antithesis.com/docs/introduction/how_antithesis
 
 **GOAL:** Develop a program that explores state spaces efficiently to detect hard-to-reproduce bugs in distributed systems.
 
-**MVP choices:** Rust framework-first, with a minimal ToyQuorum stub to prove APIs.
+**MVP choices:** Rust framework-first, with a dummy system stub to prove APIs.
 
 ## 1. State set definition
 
