@@ -1,49 +1,37 @@
-//! Snapshot of the dummy cluster: three nodes, each with a term, a role,
-//! and an inbox of messages that have not been delivered yet.
+//! Snapshot of a dummy cluster: three nodes, each with local data and a
+//! queue of messages that have not been delivered yet.
 
 use bughunter::SystemState;
 
 /// One process in the cluster.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Node {
-    pub term: u64,
-    pub role: Role,
-    /// Messages waiting to be delivered to this node.
-    pub inbox: Vec<Envelope>,
+    /// Opaque data this process currently stores.
+    pub local: u64,
+    /// Messages sent to this process that have not been delivered yet.
+    pub inbox: Vec<Message>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Role {
-    Follower = 0,
-    Leader = 1,
-}
-
-/// A message sitting in some node's inbox. Nothing delivers it yet.
+/// One in-flight message. `payload` is opaque: this snapshot does not
+/// interpret it as a vote, a write, or any other operation.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Envelope {
+pub struct Message {
     pub from: u8,
-    pub kind: MsgKind,
+    pub payload: u64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum MsgKind {
-    VoteRequest = 0,
-    VoteGrant = 1,
-}
-
-/// Global state: every node's local fields plus in-flight messages.
+/// Global state: every node's local data plus in-flight messages.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DummySystem {
     pub nodes: [Node; 3],
 }
 
 impl DummySystem {
-    /// Three followers, term 0, empty inboxes.
+    /// Three nodes with local data 0 and empty inboxes.
     pub fn initial() -> Self {
         Self {
             nodes: std::array::from_fn(|_| Node {
-                term: 0,
-                role: Role::Follower,
+                local: 0,
                 inbox: Vec::new(),
             }),
         }
@@ -54,12 +42,11 @@ impl SystemState for DummySystem {
     fn fingerprint(&self) -> u64 {
         let mut hash = Fnv::new();
         for node in &self.nodes {
-            hash.write_u64(node.term);
-            hash.write_u8(node.role as u8);
+            hash.write_u64(node.local);
             hash.write_u64(node.inbox.len() as u64);
             for message in &node.inbox {
                 hash.write_u8(message.from);
-                hash.write_u8(message.kind as u8);
+                hash.write_u64(message.payload);
             }
         }
         hash.finish()
@@ -106,10 +93,10 @@ mod tests {
     }
 
     #[test]
-    fn changing_a_term_changes_the_fingerprint() {
+    fn changing_local_data_changes_the_fingerprint() {
         let left = DummySystem::initial();
         let mut right = DummySystem::initial();
-        right.nodes[1].term = 1;
+        right.nodes[1].local = 1;
         assert_ne!(left.fingerprint(), right.fingerprint());
     }
 }

@@ -2,4 +2,4 @@
 
 mod system;
 
-pub use system::{DummySystem, Envelope, MsgKind, Node, Role};
+pub use system::{DummySystem, Message, Node};
