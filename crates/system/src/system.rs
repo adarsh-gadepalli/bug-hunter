@@ -3,31 +3,30 @@
 
 use bughunter::SystemState;
 
-/// One process in the cluster.
+/// node in the cluster.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Node {
-    /// Opaque data this process currently stores.
+    /// blackbox data variable
     pub local: u64,
-    /// Messages sent to this process that have not been delivered yet.
+    /// a list of messages that have not been delivered to this node yet.
     pub inbox: Vec<Message>,
 }
 
-/// One in-flight message. `payload` is opaque: this snapshot does not
-/// interpret it as a vote, a write, or any other operation.
+/// message struct containing the sender and the payload.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Message {
     pub from: u8,
     pub payload: u64,
 }
 
-/// Global state: every node's local data plus in-flight messages.
+/// dummy system state struct containing the nodes.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DummySystem {
     pub nodes: [Node; 3],
 }
 
 impl DummySystem {
-    /// Three nodes with local data 0 and empty inboxes.
+    /// initial state function - three nodes with local data 0 and empty inboxes.
     pub fn initial() -> Self {
         Self {
             nodes: std::array::from_fn(|_| Node {
@@ -38,9 +37,15 @@ impl DummySystem {
     }
 }
 
+/// this implements the SystemState trait for the dummy system.
 impl SystemState for DummySystem {
+
+    // fingerprint function - hashes the state of the system
     fn fingerprint(&self) -> u64 {
+        // fnv hashing 
         let mut hash = Fnv::new();
+
+        // iterate over the nodes and hash the local data and the inbox length and the messages
         for node in &self.nodes {
             hash.write_u64(node.local);
             hash.write_u64(node.inbox.len() as u64);
@@ -49,7 +54,27 @@ impl SystemState for DummySystem {
                 hash.write_u64(message.payload);
             }
         }
+
+        // return the finished hash.
         hash.finish()
+    }
+
+    /// summary function - returns a string representation of the state of the system.
+    fn summarize(&self) -> String {
+        let nodes: Vec<String> = self
+            .nodes
+            .iter()
+            .enumerate()
+            .map(|(index, node)| {
+                let inbox: Vec<String> = node
+                    .inbox
+                    .iter()
+                    .map(|message| format!("{} from n{}", message.payload, message.from))
+                    .collect();
+                format!("n{index}={} [{}]", node.local, inbox.join(", "))
+            })
+            .collect();
+        nodes.join(" | ")
     }
 }
 
@@ -58,9 +83,11 @@ struct Fnv(u64);
 
 impl Fnv {
     fn new() -> Self {
+        // initial hash value, defined by the fnv hash function.
         Self(0xcbf29ce484222325)
     }
 
+    /// fnv hashing logic 
     fn write_bytes(&mut self, bytes: &[u8]) {
         for byte in bytes {
             self.0 ^= u64::from(*byte);
@@ -77,6 +104,7 @@ impl Fnv {
     }
 
     fn finish(self) -> u64 {
+        // returns the final hash value.
         self.0
     }
 }
@@ -91,12 +119,22 @@ mod tests {
         let right = DummySystem::initial();
         assert_eq!(left.fingerprint(), right.fingerprint());
     }
-
+    
     #[test]
     fn changing_local_data_changes_the_fingerprint() {
         let left = DummySystem::initial();
         let mut right = DummySystem::initial();
         right.nodes[1].local = 1;
         assert_ne!(left.fingerprint(), right.fingerprint());
+    }
+
+    #[test]
+    fn summary_shows_values_and_inboxes() {
+        let mut state = DummySystem::initial();
+        state.nodes[1].inbox.push(Message {
+            from: 0,
+            payload: 2,
+        });
+        assert_eq!(state.summarize(), "n0=0 [] | n1=0 [2 from n0] | n2=0 []");
     }
 }

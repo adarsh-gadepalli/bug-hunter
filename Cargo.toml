@@ -8,3 +8,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+bughunter = { path = "crates/bughunter" }
+system = { path = "crates/system" }
