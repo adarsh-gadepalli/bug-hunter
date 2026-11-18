@@ -1,7 +1,9 @@
-//! Identity of a simulated snapshot. Search will use this later; it is node agnostic.
+//! Identity of a simulated snapshot. Search uses this; it is node agnostic.
 
 pub trait SystemState {
-
-    /// Placeholder function.
+    /// fingerprint function - used to identify the state.
     fn fingerprint(&self) -> u64;
+
+    /// observability function - used to emit state for debugging walks
+    fn summarize(&self) -> String;
 }
