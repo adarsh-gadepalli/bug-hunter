@@ -15,6 +15,13 @@ name = "bughunter"
 version = "0.1.0"
 
 [[package]]
+name = "kvstore"
+version = "0.1.0"
+dependencies = [
+ "bughunter",
+]
+
+[[package]]
 name = "system"
 version = "0.1.0"
 dependencies = [

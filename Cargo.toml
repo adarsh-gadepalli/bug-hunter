@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/bughunter", "crates/system"]
+members = [".", "crates/bughunter", "crates/system", "crates/kvstore"]
 resolver = "2"
 
 [package]
